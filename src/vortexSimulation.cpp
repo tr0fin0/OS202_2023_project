@@ -25,6 +25,8 @@ auto readConfigFile(std::ifstream &input)
     char buffer[maxBuffer];
     std::string sbuffer;
     std::stringstream ibuffer;
+
+
     // Lit la première ligne de commentaire :
     input.getline(buffer, maxBuffer); // Relit un commentaire
     input.getline(buffer, maxBuffer); // Lecture de la grille cartésienne
@@ -34,12 +36,16 @@ auto readConfigFile(std::ifstream &input)
     std::size_t nx, ny;
     ibuffer >> xleft >> ybot >> nx >> ny >> h;
     cartesianGrid = Numeric::CartesianGridOfSpeed({nx, ny}, point{xleft, ybot}, h);
+
+
     input.getline(buffer, maxBuffer); // Relit un commentaire
     input.getline(buffer, maxBuffer); // Lit mode de génération des particules
     sbuffer = std::string(buffer, maxBuffer);
     ibuffer = std::stringstream(sbuffer);
     int modeGeneration;
     ibuffer >> modeGeneration;
+
+
     if (modeGeneration == 0) // Génération sur toute la grille
     {
         std::size_t nbPoints;
@@ -53,6 +59,8 @@ auto readConfigFile(std::ifstream &input)
         ibuffer >> xl >> yb >> xr >> yt >> nbPoints;
         cloudOfPoints = Geometry::generatePointsIn(nbPoints, {point{xl, yb}, point{xr, yt}});
     }
+
+
     // Lit le nombre de vortex :
     input.getline(buffer, maxBuffer); // Relit un commentaire
     input.getline(buffer, maxBuffer); // Lit le nombre de vortex
@@ -70,6 +78,8 @@ auto readConfigFile(std::ifstream &input)
     }
     Simulation::Vortices vortices(nbVortices, {cartesianGrid.getLeftBottomVertex(),
                                                cartesianGrid.getRightTopVertex()});
+
+
     input.getline(buffer, maxBuffer); // Relit un commentaire
     for (std::size_t iVortex = 0; iVortex < nbVortices; ++iVortex)
     {
@@ -102,7 +112,7 @@ int main(int nargs, char *argv[])
     auto config = readConfigFile(fich);
     fich.close();
 
-    std::size_t resx = 800, resy = 600;
+    std::size_t resx = 800, resy = 800; // square window
     if (nargs > 3)
     {
         resx = std::stoull(argv[2]);
@@ -155,6 +165,8 @@ int main(int nargs, char *argv[])
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
                 advance = true;
         }
+
+
         if (animate | advance)
         {
             if (isMobile)
@@ -174,6 +186,7 @@ int main(int nargs, char *argv[])
         auto end = std::chrono::system_clock::now();
         std::chrono::duration<double> diff = end - start;
         std::string str_fps = std::string("FPS : ") + std::to_string(1. / diff.count());
+        // modifier ici pour le temps d'exécution
         myScreen.drawText(str_fps, Geometry::Point<double>{300, double(myScreen.getGeometry().second - 96)});
         myScreen.display();
     }
