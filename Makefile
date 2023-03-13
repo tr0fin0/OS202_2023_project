@@ -30,10 +30,12 @@ objs/screen.o:	src/vortex.hpp src/cloud_of_points.hpp src/cartesian_grid_of_spee
 	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ src/screen.cpp
 
 objs/vortexSimulation.o: src/cartesian_grid_of_speed.hpp src/vortex.hpp src/cloud_of_points.hpp src/runge_kutta.hpp src/screen.hpp src/vortexSimulation.cpp
-	$(CXX) $(CXXFLAGS) -Isrc -c -o $@ src/vortexSimulation.cpp
+# $(CXX) $(CXXFLAGS) -Isrc -c -o $@ src/vortexSimulation.cpp
+	$(MPICXX) $(CXXFLAGS) -Isrc -c -o $@ src/vortexSimulation.cpp
 
 vortexSimulation.exe: $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LIB)
+# $(CXX) $(CXXFLAGS) -o $@ $(OBJS) $(LIB)
+	$(MPICXX) $(CXXFLAGS) -o $@ $(OBJS) $(LIB)
 
 help:
 	@echo "Available targets : "
