@@ -13,6 +13,8 @@
 #include "runge_kutta.hpp"
 #include "screen.hpp"
 
+#include <mpi.h>
+
 auto readConfigFile(std::ifstream &input)
 {
     using point = Simulation::Vortices::point;
@@ -100,17 +102,17 @@ auto readConfigFile(std::ifstream &input)
 
 int main(int nargs, char *argv[])
 {
-    char const *filename;
-    if (nargs == 1)
-    {
-        std::cout << "Usage : vortexsimulator <nom fichier configuration>" << std::endl;
-        return EXIT_FAILURE;
-    }
+    MPI_Init(&nargs, &argv);
 
-    filename = argv[1];
-    std::ifstream fich(filename);
-    auto config = readConfigFile(fich);
-    fich.close();
+    int nProcesses;
+    MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
+
+    int process;
+    MPI_Comm_rank(MPI_COMM_WORLD, &process);
+
+    double dt;
+    // if (process == 0)
+    // {
 
     std::size_t resx = 800, resy = 800; // square window
     if (nargs > 3)
@@ -138,58 +140,20 @@ int main(int nargs, char *argv[])
     bool animate = false;
     double dt = 0.1;
 
-    while (myScreen.isOpen())
-    {
-        auto start = std::chrono::system_clock::now();
-        bool advance = false;
-        // on inspecte tous les évènements de la fenêtre qui ont été émis depuis la précédente itération
-        sf::Event event;
-        while (myScreen.pollEvent(event))
-        {
-            // évènement "fermeture demandée" : on ferme la fenêtre
-            if (event.type == sf::Event::Closed)
-                myScreen.close();
-            if (event.type == sf::Event::Resized)
+            if (process == 0)
             {
-                // on met à jour la vue, avec la nouvelle taille de la fenêtre
-                myScreen.resize(event);
-            }
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-                animate = true;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-                animate = false;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-                dt *= 2;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-                dt /= 2;
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                advance = true;
-        }
 
 
-        if (animate | advance)
-        {
-            if (isMobile)
+                        MPI_Send(&dt, 1, MPI_DOUBLE, 1, 101, MPI_COMM_WORLD);
+                        // MPI_Send(&dt, 1, MPI_DOUBLE, 1, 101, MPI_COMM_WORLD);
+    MPI_Finalize();
+            if (process == 1)
             {
-                cloud = Numeric::solve_RK4_movable_vortices(dt, grid, vortices, cloud);
+                MPI_Recv(&dt, 1, MPI_DOUBLE, 0, 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                // MPI_Recv(&dt, 1, MPI_DOUBLE, 0, 101, MPI_COMM_WORLD, &status);
+                std::cout << "print dt: " << dt << std::endl;
             }
-            else
-            {
-                cloud = Numeric::solve_RK4_fixed_vortices(dt, grid, cloud);
-            }
-        }
-        myScreen.clear(sf::Color::Black);
-        std::string strDt = std::string("Time step : ") + std::to_string(dt);
-        myScreen.drawText(strDt, Geometry::Point<double>{50, double(myScreen.getGeometry().second - 96)});
-        myScreen.displayVelocityField(grid, vortices);
-        myScreen.displayParticles(grid, vortices, cloud);
-        auto end = std::chrono::system_clock::now();
-        std::chrono::duration<double> diff = end - start;
-        std::string str_fps = std::string("FPS : ") + std::to_string(1. / diff.count());
-        // modifier ici pour le temps d'exécution
-        myScreen.drawText(str_fps, Geometry::Point<double>{300, double(myScreen.getGeometry().second - 96)});
-        myScreen.display();
-    }
+    MPI_Finalize();
 
     return EXIT_SUCCESS;
 }
