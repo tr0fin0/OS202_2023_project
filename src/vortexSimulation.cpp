@@ -127,6 +127,8 @@ int main(int nargs, char *argv[])
     Graphisme::Screen myScreen({resx, resy}, {grid.getLeftBottomVertex(), grid.getRightTopVertex()});
     bool animate = false;
     double dt = 0.1;
+    double totalTime = 0.0;
+    double totalIterations = 0.0;
 
     while (myScreen.isOpen())
     {
@@ -174,9 +176,18 @@ int main(int nargs, char *argv[])
         auto end = std::chrono::system_clock::now();
         std::chrono::duration<double> diff = end - start;
         std::string str_fps = std::string("FPS : ") + std::to_string(1. / diff.count());
+
         myScreen.drawText(str_fps, Geometry::Point<double>{300, double(myScreen.getGeometry().second - 96)});
         myScreen.display();
+
+        totalTime += diff.count();
+        totalIterations++;
     }
+
+
+    std::cout << "totalTime: " << totalTime << " s" << std::endl;
+    std::cout << "mean: "<< totalTime / totalIterations*1000 << " ms" << std::endl;
+
 
     return EXIT_SUCCESS;
 }
