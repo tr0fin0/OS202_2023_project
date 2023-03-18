@@ -5,20 +5,42 @@
 - **partie 2**: parallélisation en mémoire distribuée;
 - **partie 3**: parallélisation en mémoire distribuée et partagée des calculs;
 - **partie 4**: analyse approche Eulérienne-Lagrangienne;
-
-
-## partie 1
+pour faire la comparasion entre des différents l'ensemble de données utilisé était le:
+```bash
+./data/simpleSimulation
+```
 on considère comme reference les données suivantes:
 ```bash
 
 ```
-on considère que le code séquentielle a la performance suivante:
+on utilisera le FPS comme mesure de la vélocité du code.
 
 
-## partie 2
+## partie 1, 2 et 3
+avec une fenêtre de taille `540 x 540 pixels` avec un `dt = 0.1` et on considère les performance suivantes:
+| code | main | part1 | part2 | part3 |
+|------|-----:|------:|------:|------:|
+| oneVortexSimulation | 8 FPS|  FPS| - FPS| - FPS|
+| cornerTest | 62 FPS|  FPS|  FPS| - FPS|
+| simpleSimulation | 21 FPS|  FPS|  FPS| - FPS|
+| manyVortices | 11 FPS|  FPS|  FPS| - FPS|
 
+avec une fenêtre de taille `1080 x 1080 pixels` avec un `dt = 0.1` et on considère les performance suivantes:
+| code | main | part1 | part2 | part3 |
+|------|-----:|------:|------:|------:|
+| oneVortexSimulation | 8 FPS|  FPS| - FPS| - FPS|
+| cornerTest | 60 FPS|  FPS|  FPS| - FPS|
+| simpleSimulation | 21 FPS| 19 FPS| 28 FPS| - FPS|
+| manyVortices | 11 FPS|  FPS|  FPS| - FPS|
 
-## partie 3
+avec une fenêtre de taille `2160 x 2160 pixels` avec un `dt = 0.1` et on considère les performance suivantes:
+| code | main | part1 | part2 | part3 |
+|------|-----:|------:|------:|------:|
+| oneVortexSimulation | 8 FPS|  FPS|  FPS| - FPS|
+| cornerTest | 58 FPS|  FPS|  FPS| - FPS|
+| simpleSimulation | 20 FPS|  FPS|  FPS| - FPS|
+| manyVortices | 10 FPS|  FPS|  FPS| - FPS|
+
 
 
 ## partie 4
