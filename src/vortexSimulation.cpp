@@ -307,12 +307,5 @@ int main(int nargs, char *argv[])
     }
 
     MPI_Finalize();
-
-
-
     return EXIT_SUCCESS;
 }
-
-
-
-// mpirun -np 2 ./vortexSimulation.exe ./data/simpleSimulation.dat
