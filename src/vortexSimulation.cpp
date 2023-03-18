@@ -107,92 +107,41 @@ int main(int nargs, char *argv[])
     MPI_Status status;   // for MPI_Iprobe
     MPI_Request request; // for MPI_Isend
 
-    int process;
-    MPI_Comm_rank(MPI_COMM_WORLD, &process);
-
-    // MPI_Request request;
-
-    // MPI_Status status;
-    // if (process == 0)
-    // {
-    //     MPI_Send(&token, 1, MPI_INT, 1, 101, globComm);
-    //     MPI_Recv(&token, 1, MPI_INT, nProcesses - 1, 101, globComm, &status);
-    // }
-    // else
-    // {
-    //     MPI_Recv(&token, 1, MPI_INT, process - 1, 101, globComm, &status);
-    //     MPI_Send(&token, 1, MPI_INT, (process + 1) % nProcesses, 101, globComm);
-    // }
-    // MPI_Recv(
-    // void* data,
-    // int count,
-    // MPI_Datatype datatype,
-    // int source,
-    // int tag,
-    // MPI_Comm communicator,
-    // MPI_Status* status)
-
-    // int MPI_Irecv(
-    //           void* buf,
-    //           int count,
-    //           MPI_Datatype datatype,
-    //           int source,
-    //           int tag,
-    //           MPI_Comm comm,
-    //           MPI_Request *request)
-
-    // MPI_Send(
-    // void* data,
-    // int count,
-    // MPI_Datatype datatype,
-    // int destination,
-    // int tag,
-    // MPI_Comm communicator)
-
-    // int MPI_Isend(
-    //           const void* buf,
-    //           int count,
-    //           MPI_Datatype datatype,
-    //           int dest,
-    //           int tag,
-    //           MPI_Comm comm,
-    //           MPI_Request *request)
-
-
-
-
-    bool isActive;
-
-
-
-
-    if (process == 0)
+    // both processes will create the following variables
+    char const *filename;
+    if (nargs == 1)
     {
-        char const *filename;
-        if (nargs == 1)
-        {
-            std::cout << "Usage : vortexsimulator <nom fichier configuration>" << std::endl;
-            return EXIT_FAILURE;
-        }
+        std::cout << "Usage : vortexsimulator <nom fichier configuration>" << std::endl;
+        return EXIT_FAILURE;
+    }
 
-        filename = argv[1];
-        std::ifstream fich(filename);
-        auto config = readConfigFile(fich);
-        fich.close();
+    // initial variables
+    filename = argv[1];
+    std::ifstream fich(filename);
+    auto config = readConfigFile(fich);
+    fich.close();
 
-        std::size_t resx = 1080, resy = 1080; // square window
-        if (nargs > 3)
-        {
-            resx = std::stoull(argv[2]);
-            resy = std::stoull(argv[3]);
-        }
+    std::size_t resx = 1080, resy = 1080;
+    if (nargs > 3)
+    {
+        resx = std::stoull(argv[2]);
+        resy = std::stoull(argv[3]);
+    }
 
-        auto vortices = std::get<0>(config);
-        auto isMobile = std::get<1>(config);
-        auto grid = std::get<2>(config);
-        auto cloud = std::get<3>(config);
-        double dt;
+    // initializing variables from file
+    auto vortices = std::get<0>(config);
+    auto isMobile = std::get<1>(config);
+    auto grid = std::get<2>(config);
+    auto cloud = std::get<3>(config);
 
+    // initialize grid with vortices
+    grid.updateVelocityField(vortices);
+
+    bool animate = true; // continue calculation?
+    double dt = 0.1;     // time step
+
+    int isReceiving = false; // flag, are there any message to receive?
+    int isFinished = false;  // flag, window was closed?
         std::cout << "######## Vortex simultor ########" << std::endl
                   << std::endl;
         std::cout << "Press P for play animation " << std::endl;
