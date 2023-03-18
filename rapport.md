@@ -6,11 +6,32 @@
 - **partie 3**: parallélisation en mémoire distribuée et partagée des calculs;
 - **partie 4**: analyse approche Eulérienne-Lagrangienne;
 pour faire la comparasion entre des différents l'ensemble de données utilisé était le:
+
+on considère comme reference les données suivantes pour mon ordniateur:
 ```bash
-./data/simpleSimulation
-```
-on considère comme reference les données suivantes:
-```bash
+Architecture:            x86_64
+  CPU op-mode(s):        32-bit, 64-bit
+  Address sizes:         39 bits physical, 48 bits virtual
+  Byte Order:            Little Endian
+CPU(s):                  20
+  On-line CPU(s) list:   0-19
+Vendor ID:               GenuineIntel
+  Model name:            12th Gen Intel(R) Core(TM) i7-12700H
+    CPU family:          6
+    Model:               154
+    Thread(s) per core:  2
+    Core(s) per socket:  14
+    Socket(s):           1
+    Stepping:            3
+    CPU max MHz:         4700.0000
+    CPU min MHz:         400.0000
+
+
+Caches (sum of all):     
+  L1d:                   544 KiB (14 instances)
+  L1i:                   704 KiB (14 instances)
+  L2:                    11.5 MiB (8 instances)
+  L3:                    24 MiB (1 instance)
 
 ```
 on utilisera le FPS comme mesure de la vélocité du code.
@@ -20,26 +41,35 @@ on utilisera le FPS comme mesure de la vélocité du code.
 avec une fenêtre de taille `540 x 540 pixels` avec un `dt = 0.1` et on considère les performance suivantes:
 | code | main | part1 | part2 | part3 |
 |------|-----:|------:|------:|------:|
-| oneVortexSimulation | 8 FPS|  FPS| - FPS| - FPS|
-| cornerTest | 62 FPS|  FPS|  FPS| - FPS|
-| simpleSimulation | 21 FPS|  FPS|  FPS| - FPS|
-| manyVortices | 11 FPS|  FPS|  FPS| - FPS|
+| oneVortexSimulation | 8 FPS| 7 FPS| 12 FPS| - FPS|
+| cornerTest | 62 FPS| 59 FPS| 92 FPS| - FPS|
+| simpleSimulation | 21 FPS| 18 FPS| 28 FPS| - FPS|
+| manyVortices | 11 FPS| 10 FPS| 14 FPS| - FPS|
 
 avec une fenêtre de taille `1080 x 1080 pixels` avec un `dt = 0.1` et on considère les performance suivantes:
 | code | main | part1 | part2 | part3 |
 |------|-----:|------:|------:|------:|
-| oneVortexSimulation | 8 FPS|  FPS| - FPS| - FPS|
-| cornerTest | 60 FPS|  FPS|  FPS| - FPS|
-| simpleSimulation | 21 FPS| 19 FPS| 28 FPS| - FPS|
-| manyVortices | 11 FPS|  FPS|  FPS| - FPS|
+| oneVortexSimulation | 8 FPS| 7 FPS| 12 FPS| - FPS|
+| cornerTest | 60 FPS| 58 FPS| 82 FPS| - FPS|
+| simpleSimulation | 21 FPS| 19 FPS| 26 FPS| - FPS|
+| manyVortices | 11 FPS| 10 FPS| 14 FPS| - FPS|
 
 avec une fenêtre de taille `2160 x 2160 pixels` avec un `dt = 0.1` et on considère les performance suivantes:
 | code | main | part1 | part2 | part3 |
 |------|-----:|------:|------:|------:|
-| oneVortexSimulation | 8 FPS|  FPS|  FPS| - FPS|
-| cornerTest | 58 FPS|  FPS|  FPS| - FPS|
-| simpleSimulation | 20 FPS|  FPS|  FPS| - FPS|
-| manyVortices | 10 FPS|  FPS|  FPS| - FPS|
+| oneVortexSimulation | 8 FPS| 7 FPS| 12 FPS| - FPS|
+| cornerTest | 58 FPS| 55 FPS| 82 FPS| - FPS|
+| simpleSimulation | 20 FPS| 19 FPS| 27 FPS| - FPS|
+| manyVortices | 10 FPS| 10 FPS| 14 FPS| - FPS|
+
+on note que la part1 n'a pas ajouté des performances. l'adition des processus de communication entre les processus a fait que le FPS reste très pareil.
+
+même que l'exécution soit parallélise, gagne de performance, les exchanges entre les processus fait qui, à la fin, l'exécution soit pareil.
+
+
+par contre, on note que la part2 a augmente beaucoup l'efficacité du algorithme. les calculus parallelises rendent le code beaucoup plus rapide comment on peut voir avec le gagne de FPS.
+
+on note que la taille de la simulation n'a pas apporté trop de changement de temps d'exécution.
 
 
 
