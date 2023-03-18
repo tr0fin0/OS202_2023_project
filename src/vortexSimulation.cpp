@@ -97,10 +97,15 @@ auto readConfigFile(std::ifstream &input)
 
 int main(int nargs, char *argv[])
 {
-    MPI_Init(&nargs, &argv);
+    // initializing MPI
+    int numProcesses, process;
 
-    int nProcesses;
-    MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
+    MPI_Init(&nargs, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numProcesses); //
+    MPI_Comm_rank(MPI_COMM_WORLD, &process);      //
+
+    MPI_Status status;   // for MPI_Iprobe
+    MPI_Request request; // for MPI_Isend
 
     int process;
     MPI_Comm_rank(MPI_COMM_WORLD, &process);
