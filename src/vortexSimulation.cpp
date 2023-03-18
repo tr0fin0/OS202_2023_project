@@ -142,102 +142,107 @@ int main(int nargs, char *argv[])
 
     int isReceiving = false; // flag, are there any message to receive?
     int isFinished = false;  // flag, window was closed?
+
+    // program will be divided in 2 process
+    //  0:  update and management of screen
+    //  1:  execute calculus
+    if (process == 0)
+    {
+        // user instructions
+        Graphisme::Screen myScreen({resx, resy}, {grid.getLeftBottomVertex(), grid.getRightTopVertex()});
         std::cout << "######## Vortex simultor ########" << std::endl
                   << std::endl;
         std::cout << "Press P for play animation " << std::endl;
         std::cout << "Press S to stop animation" << std::endl;
         std::cout << "Press right cursor to advance step by step in time" << std::endl;
-        std::cout << "Press down cursor to halve the time step" << std::endl;
-        std::cout << "Press up cursor to double the time step" << std::endl;
+        std::cout << "Press down cursor  to halve  the time step" << std::endl;
+        std::cout << "Press up cursor    to double the time step" << std::endl;
 
-        grid.updateVelocityField(vortices);
+        // initializing variable to hold keyboard's commands
+        auto start = std::chrono::system_clock::now();
 
-        Graphisme::Screen myScreen({resx, resy}, {grid.getLeftBottomVertex(), grid.getRightTopVertex()});
-        dt = 0.1;
-        bool animate = false;
-
-        // myScreen({resx, resy}, {grid.getLeftBottomVertex(), grid.getRightTopVertex()});
-        // dt = 0.1;
-        // animate = false;
-
-        while(isActive)
-        // while (myScreen.isOpen())
+        // comunication between processes is time consuming
+        // processes will only exchange a variable to reduce time lost with comunication
+        char command = '_';
+        int FPS = 0;
+        int frameCount = 0;
+        while (myScreen.isOpen())
         {
-        // if (process == 0)
-        // {
-            auto start = std::chrono::system_clock::now();
-            bool advance = false;
-
-            // advance = false;
-
-            // évènements
             // on inspecte tous les évènements de la fenêtre qui ont été émis depuis la précédente itération
             sf::Event event;
-            while (myScreen.pollEvent(event))
+            // read screen for key pressed to evaluate
+            while (myScreen.pollEvent(event) && command != 'E' && command != 'K')
             {
-                // évènement "fermeture demandée" : on ferme la fenêtre
-                if (event.type == sf::Event::Closed)
-                    myScreen.close();
-                    // isActive = myScreen.isOpen();
-
                 if (event.type == sf::Event::Resized)
-                {
-                    // on met à jour la vue, avec la nouvelle taille de la fenêtre
-                    myScreen.resize(event);
-                }
+                    myScreen.resize(event); // event resize screen
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-                    animate = true;
+                    command = 'P'; // play animation
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-                    animate = false;
+                    command = 'S'; // stop animation
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+                {
+                    command = 'U'; // +speed animation
                     dt *= 2;
+                }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
+                {
+                    command = 'D'; // -speed animatin
                     dt /= 2;
+                }
                 if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-                    advance = true;
+                    command = 'A'; // advance
+                if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::E))
+                    command = 'E'; // close window and terminate other processes
+
+                if (command != '_')
+                    MPI_Send(&command, 1, MPI_CHAR, 1, 0, MPI_COMM_WORLD);
             }
 
-
-            // calcule
-            if (animate | advance)
+            // scaning for message to receive
+            MPI_Iprobe(1, MPI_ANY_TAG, MPI_COMM_WORLD, &isReceiving, &status);
+            if (isReceiving)
             {
-                if (isMobile)
+                // scaning for end process
+                MPI_Iprobe(1, 0, MPI_COMM_WORLD, &isFinished, &status);
+                if (isFinished)
                 {
-                    MPI_Send(&dt,       1, MPI_DOUBLE, 1, 100, MPI_COMM_WORLD);
-                    // MPI_Send(&grid,     1, MPI_DOUBLE, 1, 101, MPI_COMM_WORLD);
-                    // MPI_Send(&vortices, 1, MPI_DOUBLE, 1, 102, MPI_COMM_WORLD);
-                    // MPI_Send(&cloud,    1, MPI_DOUBLE, 1, 103, MPI_COMM_WORLD);
-                    cloud = Numeric::solve_RK4_movable_vortices(dt, grid, vortices, cloud);
-                    // MPI_Recv(&cloud,    1, MPI_DOUBLE, 1, 104, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+                    MPI_Recv(&command, 1, MPI_CHAR, 1, 0, MPI_COMM_WORLD, MPI_STATUSES_IGNORE);
+                    if (command == 'K')
+                    {
+                        myScreen.close();
+                        MPI_Finalize();
+                        return 0;
+                    }
+                }
 
-                }
-                else
+                // receiving data
+                MPI_Recv(cloud.data(), 2 * cloud.numberOfPoints(), MPI_DOUBLE, 1, 1, MPI_COMM_WORLD, &status);
+                MPI_Recv(grid.data(), 2 * grid.getSizeGrid(), MPI_DOUBLE, 1, 2, MPI_COMM_WORLD, &status);
+                MPI_Recv(vortices.data(), 3 * vortices.numberOfVortices(), MPI_DOUBLE, 1, 3, MPI_COMM_WORLD, &status);
+                frameCount++;
+
+                // updating screen
+                myScreen.clear(sf::Color::Black);
+
+                std::string strDt = std::string("Time step : ") + std::to_string(dt);
+                myScreen.drawText(strDt, Geometry::Point<double>{50, double(myScreen.getGeometry().second - 96)}); // not time consuming
+                myScreen.displayVelocityField(grid, vortices);
+
+                myScreen.displayParticles(grid, vortices, cloud); // time consuming
+
+                auto end = std::chrono::system_clock::now();
+                std::chrono::duration<double> diff = end - start;
+                if (diff.count() >= 1.0)
                 {
-                    // MPI_Send(&dt, 1, MPI_DOUBLE, 1, 101, MPI_COMM_WORLD);
-                    cloud = Numeric::solve_RK4_fixed_vortices(dt, grid, cloud);
+                    FPS = frameCount;
+                    start = end;
+                    frameCount = 0;
                 }
+
+                std::string str_fps = std::string("FPS : ") + std::to_string(FPS);
+                myScreen.drawText(str_fps, Geometry::Point<double>{300, double(myScreen.getGeometry().second - 96)}); // not time consuming
+                myScreen.display();                                                                                   // not time consuming
             }
-
-            // affichage
-            myScreen.clear(sf::Color::Black);
-
-            std::string strDt = std::string("time step : ") + std::to_string(dt);
-            myScreen.drawText(strDt, Geometry::Point<double>{50, double(myScreen.getGeometry().second - 96)});
-            myScreen.displayVelocityField(grid, vortices);
-            myScreen.displayParticles(grid, vortices, cloud);
-
-            auto end = std::chrono::system_clock::now();
-            std::chrono::duration<double> diff = end - start;
-
-            std::string str_fps = std::string("FPS : ") + std::to_string(1. / diff.count());
-            myScreen.drawText(str_fps, Geometry::Point<double>{300, double(myScreen.getGeometry().second - 96)});
-
-            myScreen.display();
-
-            isActive = myScreen.isOpen();
-            MPI_Send(&isActive, 1, MPI_CXX_BOOL, 1, 99, MPI_COMM_WORLD);
-            // MPI_Isend(&isActive, 1, MPI_CXX_BOOL, 1, 99, MPI_COMM_WORLD, &request);
-
         }
     }
 
