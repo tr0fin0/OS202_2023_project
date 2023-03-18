@@ -108,6 +108,10 @@ namespace Numeric
         CartesianGridOfSpeed& operator = ( CartesianGridOfSpeed const& ) = default;
         CartesianGridOfSpeed& operator = ( CartesianGridOfSpeed     && ) = default;
 
+        int getSizeGrid(){
+            return m_velocityField.size();
+        }
+
     private:
         std::size_t m_width, m_height;
         double      m_left, m_bottom;
