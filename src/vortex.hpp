@@ -34,6 +34,14 @@ namespace Simulation
                      m_centers_and_intensities[3*t_index+1] };
         }
 
+        /**
+         * @brief Return the address of the first velocity vector of the velocityfield
+         * 
+         * @return double* Return as a double value. 
+         */
+        double* data() { return (double*)m_centers_and_intensities.data(); }
+        double const* data() const { return (double const*)m_centers_and_intensities.data(); }
+
         double getIntensity( std::size_t t_index ) const 
         {
             assert(t_index < numberOfVortices() );
