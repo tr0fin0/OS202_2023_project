@@ -95,45 +95,6 @@ auto readConfigFile(std::ifstream &input)
     return std::make_tuple(vortices, isMobile, cartesianGrid, cloudOfPoints);
 }
 
-typedef struct
-{
-    bool advance, animate;
-    double dt;
-} eventVars;
-
-eventVars getEvents(Graphisme::Screen myScreen, bool animate, bool advance, float dt)
-{
-    eventVars vars;
-    vars.advance = advance;
-    vars.animate = animate;
-    vars.dt = dt;
-
-    sf::Event event;
-    while (myScreen.pollEvent(event))
-    {
-        // évènement "fermeture demandée" : on ferme la fenêtre
-        if (event.type == sf::Event::Closed)
-            myScreen.close();
-        if (event.type == sf::Event::Resized)
-        {
-            // on met à jour la vue, avec la nouvelle taille de la fenêtre
-            myScreen.resize(event);
-        }
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::P))
-            vars.animate = true;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            vars.animate = false;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
-            vars.dt *= 2;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Down))
-            vars.dt /= 2;
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Right))
-            vars.advance = true;
-    }
-
-    return vars;
-};
-
 int main(int nargs, char *argv[])
 {
     MPI_Init(&nargs, &argv);
