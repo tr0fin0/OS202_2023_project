@@ -246,50 +246,64 @@ int main(int nargs, char *argv[])
         }
     }
 
-
-    if (process == 1)
+    else
     {
-        isActive = true;
+        while (true)
+        {
+            bool advance = false;
+            char command = '_';
 
-        // char const *filename;
+            // scaning for message to receive
+            MPI_Iprobe(0, 0, MPI_COMM_WORLD, &isReceiving, &status);
+            if (isReceiving)
+            {
+                // reading keyboard pressed
+                MPI_Recv(&command, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD, &status);
+                switch (command)
+                {
+                case 'E':
+                    command = 'K';
+                    MPI_Send(&command, 1, MPI_CHAR, 0, 0, MPI_COMM_WORLD); // process terminated
+                    MPI_Finalize();
+                    return EXIT_SUCCESS;
+                case 'P':
+                    animate = true;
+                    break;
+                case 'S':
+                    animate = false;
+                    break;
+                case 'U':
+                    dt *= 2;
+                    break;
+                case 'D':
+                    dt /= 2;
+                    break;
+                case 'A':
+                    advance = true;
+                    break;
+                default:
+                    break;
+                }
+            }
 
-        // filename = argv[1];
-        // std::ifstream fich(filename);
-        // auto config = readConfigFile(fich);
-        // fich.close();
+            if (animate | advance)
+            {
+                // mobile decide between fix or dynamical execution
+                if (isMobile)
+                    cloud = Numeric::solve_RK4_movable_vortices(dt, grid, vortices, cloud);
+                else
+                    cloud = Numeric::solve_RK4_fixed_vortices(dt, grid, cloud);
 
-        // auto vortices = std::get<0>(config);
-        // auto isMobile = std::get<1>(config);
-        // auto grid = std::get<2>(config);
-        // auto cloud = std::get<3>(config);
-        Simulation::Vortices  vortices;
-        bool isMobile;
-        Numeric::CartesianGridOfSpeed grid;
-        Geometry::CloudOfPoints cloud;
-
-        double dt;
-
-
-        while(isActive){
-            // if (isMobile)
-            // {
-                MPI_Recv(&dt,       1, MPI_DOUBLE, 0, 100, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                // MPI_Recv(&grid,     1, MPI_DOUBLE, 0, 101, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                // MPI_Recv(&vortices, 1, MPI_DOUBLE, 0, 102, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                // MPI_Recv(&cloud,    1, MPI_DOUBLE, 0, 103, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                // MPI_Send(&cloud,    1, MPI_DOUBLE, 0, 104, MPI_COMM_WORLD);
-
-                cloud = Numeric::solve_RK4_movable_vortices(dt, grid, vortices, cloud);
-
-                std::cout << "print dt: " << dt << std::endl;
-
-                MPI_Recv(&isActive, 1, MPI_CXX_BOOL, 0, 99, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-                // MPI_Irecv(&isActive, 1, MPI_CXX_BOOL, 0, 99, MPI_COMM_WORLD, &request);
-                // std::cout << "isActive: " << isActive << std::endl;
-
-            // }
+                // grid size is multipled by 2 because each entry of the 2D vector has x and y values
+                // number of vortices is multipled by 3 because each vortice has v1, v2 and v3
+                // MPI_Isend(cloud.data(), 2 * cloud.numberOfPoints(), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD, &request);
+                // MPI_Isend(grid.data(), 2 * grid.getSizeGrid(), MPI_DOUBLE, 0, 2, MPI_COMM_WORLD, &request);
+                // MPI_Isend(vortices.data(), 3 * vortices.numberOfVortices(), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD, &request);
+                MPI_Send(cloud.data(), 2 * cloud.numberOfPoints(), MPI_DOUBLE, 0, 1, MPI_COMM_WORLD);
+                MPI_Send(grid.data(), 2 * grid.getSizeGrid(), MPI_DOUBLE, 0, 2, MPI_COMM_WORLD);
+                MPI_Send(vortices.data(), 3 * vortices.numberOfVortices(), MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);
+            }
         }
-
     }
 
     MPI_Finalize();
