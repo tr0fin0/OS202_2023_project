@@ -101,7 +101,7 @@ int main( int nargs, char* argv[] )
     auto config = readConfigFile(fich);
     fich.close();
 
-    std::size_t resx=800, resy=600;
+    std::size_t resx=1080, resy=1080;
     if (nargs>3)
     {
         resx = std::stoull(argv[2]);
