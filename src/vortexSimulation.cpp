@@ -105,7 +105,6 @@ int main(int nargs, char *argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &process);      //
 
     MPI_Status status;   // for MPI_Iprobe
-    MPI_Request request; // for MPI_Isend
 
     // both processes will create the following variables
     char const *filename;
